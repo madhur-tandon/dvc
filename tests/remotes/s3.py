@@ -5,7 +5,7 @@ import uuid
 import pytest
 from funcy import cached_property
 
-from dvc.path_info import CloudURLInfo
+from .path_info import CloudURLInfo
 from dvc.utils import env2bool
 
 from .base import Base
@@ -95,6 +95,10 @@ class S3(Base, CloudURLInfo):
             encoding = locale.getpreferredencoding(False)
         assert errors is None
         return self.read_bytes().decode(encoding)
+
+    @property
+    def fs_path(self):
+        return self.bucket + "/" + self.path.lstrip("/")
 
 
 @pytest.fixture

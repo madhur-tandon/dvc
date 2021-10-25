@@ -2,7 +2,6 @@ import threading
 
 from funcy import cached_property, wrap_prop
 
-from dvc.path_info import CloudURLInfo
 from dvc.scheme import Schemes
 
 # pylint:disable=abstract-method
@@ -11,14 +10,19 @@ from .fsspec_wrapper import CallbackMixin, FSSpecWrapper
 
 class WebHDFSFileSystem(CallbackMixin, FSSpecWrapper):
     scheme = Schemes.WEBHDFS
-    PATH_CLS = CloudURLInfo
     REQUIRES = {"fsspec": "fsspec"}
     PARAM_CHECKSUM = "checksum"
 
-    def _with_bucket(self, path):
-        if isinstance(path, self.PATH_CLS):
-            return f"/{path.path.rstrip('/')}"
-        return path
+    @classmethod
+    def _strip_protocol(cls, path: str) -> str:
+        from fsspec.utils import infer_storage_options
+        return infer_storage_options(path)["path"]
+
+    def unstrip_protocol(self, path: str) -> str:
+        host = self.fs_args["host"]
+        port = self.fs_args["port"]
+        path = path.lstrip("/")
+        return f"webhdfs://{host}:{port}/{path}"
 
     @staticmethod
     def _get_kwargs_from_urls(urlpath):
@@ -47,6 +51,5 @@ class WebHDFSFileSystem(CallbackMixin, FSSpecWrapper):
         return fs
 
     def checksum(self, path_info):
-        path = self._with_bucket(path_info)
-        ukey = self.fs.ukey(path)
+        ukey = self.fs.ukey(path_info)
         return ukey["bytes"]

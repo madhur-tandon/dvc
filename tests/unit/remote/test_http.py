@@ -10,7 +10,7 @@ def test_download_fails_on_error_code(tmp_dir, http):
     fs = HTTPFileSystem(**http.config)
 
     with pytest.raises(FileNotFoundError):
-        fs.download_file(http / "missing.txt", tmp_dir / "missing.txt")
+        fs.download_file((http / "missing.txt").fs_path, (tmp_dir / "missing.txt").fs_path)
 
 
 def test_public_auth_method(dvc):

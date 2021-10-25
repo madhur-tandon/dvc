@@ -5,7 +5,7 @@ import uuid
 import pytest
 from funcy import cached_property
 
-from dvc.path_info import URLInfo
+from .path_info import URLInfo
 
 from .base import Base
 
@@ -69,6 +69,9 @@ class SSH(Base, URLInfo):
         assert errors is None
         return self.read_bytes().decode(encoding)
 
+    @property
+    def fs_path(self):
+        return self.path
 
 @pytest.fixture(scope="session")
 def ssh_server(test_config, docker_compose, docker_services):

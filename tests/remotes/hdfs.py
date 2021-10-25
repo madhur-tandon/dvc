@@ -6,10 +6,12 @@ import uuid
 from contextlib import contextmanager
 from pathlib import Path
 from tempfile import TemporaryDirectory
+from urllib.parse import urlparse
 
 import pytest
 
-from dvc.path_info import URLInfo
+from .path_info import URLInfo
+from dvc.utils.path import as_string
 
 from .base import Base
 
@@ -68,6 +70,10 @@ class HDFS(Base, URLInfo):  # pylint: disable=abstract-method
             encoding = locale.getpreferredencoding(False)
         assert errors is None
         return self.read_bytes().decode(encoding)
+
+    @property
+    def fs_path(self):
+        return self.path.lstrip("/")
 
 
 @pytest.fixture(scope="session")
@@ -200,7 +206,9 @@ def md5md5crc32c(path):
 
 
 def hadoop_fs_checksum(_, path_info):
-    return md5md5crc32c(Path(_hdfs_root.name) / path_info.path.lstrip("/"))
+    parsed = urlparse(path_info)
+
+    return md5md5crc32c(Path(_hdfs_root.name) / parsed.path.lstrip("/"))
 
 
 class FakeHadoopFileSystem:
@@ -243,10 +251,14 @@ class FakeHadoopFileSystem:
 
         entries = self._fs.get_file_info(self._path(path), **kwargs)
         if isinstance(entries, FileInfo):
-            return self._adjust_entry(entries)
+            ret = self._adjust_entry(entries)
+        else:
+            assert isinstance(entries, list)
+            ret = list(map(self._adjust_entry, entries))
 
-        assert isinstance(entries, list)
-        return list(map(self._adjust_entry, entries))
+        #        import pdb; pdb.set_trace()
+
+        return ret
 
     def _adjust_entry(self, entry):
         import posixpath

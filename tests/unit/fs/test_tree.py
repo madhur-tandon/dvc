@@ -2,7 +2,6 @@ import pytest
 
 from dvc.config import ConfigError
 from dvc.fs import get_cloud_fs
-from dvc.path_info import CloudURLInfo
 
 
 def test_get_cloud_fs(tmp_dir, dvc):
@@ -12,9 +11,9 @@ def test_get_cloud_fs(tmp_dir, dvc):
         name="second", url="remote://first/second", default=False
     )
 
-    base = CloudURLInfo("s3://bucket/path")
-    first = base / "first"
-    second = first / "second"
+    base = "bucket/path"
+    first = f"{base}/first"
+    second = f"{first}/second"
 
     _, _, path_info = get_cloud_fs(dvc, name="base")
     assert path_info == base
